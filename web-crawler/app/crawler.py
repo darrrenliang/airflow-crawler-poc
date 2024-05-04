@@ -2,10 +2,8 @@ import requests
 import logging
 import sys
 
-# logger level settings
+# logging level settings
 logging.basicConfig(
-    filename='crawler.log', 
-    filemode='w',
     level=logging.INFO, 
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
