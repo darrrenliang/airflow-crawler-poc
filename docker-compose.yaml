@@ -1,0 +1,38 @@
+version: "3.9"
+services:
+  # trino-coordinator:
+  #   image: "trinodb/trino:latest"
+  #   ports:
+  #     - '8080:8080'
+  #   volumes:
+  #     - ./trino/coordinator/etc:/etc/trino:ro
+  #   depends_on:
+  #     - hive
+  #     - trino-worker
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         cpus: 2
+  #         memory: 3G
+
+  # trino-worker:
+  #   image: "trinodb/trino:latest"
+  #   volumes:
+  #     - ./trino/worker/etc:/etc/trino:ro
+  #   depends_on:
+  #     - hive
+  #   deploy:
+  #     mode: replicated
+  #     replicas: 2
+  #     resources:
+  #       limits:
+  #         cpus: 2
+  #         memory: 6G
+  oracle:
+    image: "oraclelinux:7-slim"
+    environment:
+      ORACLE_RANDOM_PASSWORD: true
+      APP_USER: my_user
+      APP_USER_PASSWORD: password_i_should_change
+    ports:
+      - 1521:1521
