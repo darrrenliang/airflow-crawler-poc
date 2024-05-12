@@ -1,38 +1,83 @@
-version: "3.9"
+version: '3'
 services:
-  # trino-coordinator:
-  #   image: "trinodb/trino:latest"
-  #   ports:
-  #     - '8080:8080'
-  #   volumes:
-  #     - ./trino/coordinator/etc:/etc/trino:ro
-  #   depends_on:
-  #     - hive
-  #     - trino-worker
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         cpus: 2
-  #         memory: 3G
-
-  # trino-worker:
-  #   image: "trinodb/trino:latest"
-  #   volumes:
-  #     - ./trino/worker/etc:/etc/trino:ro
-  #   depends_on:
-  #     - hive
-  #   deploy:
-  #     mode: replicated
-  #     replicas: 2
-  #     resources:
-  #       limits:
-  #         cpus: 2
-  #         memory: 6G
-  oracle:
-    image: "oraclelinux:7-slim"
-    environment:
-      ORACLE_RANDOM_PASSWORD: true
-      APP_USER: my_user
-      APP_USER_PASSWORD: password_i_should_change
+  mariadb:
+    image: mariadb
+    container_name: mariadb
+    hostname: mariadb
+    restart: unless-stopped
     ports:
-      - 1521:1521
+      - 3306:3306
+    environment:
+      MARIADB_ROOT_PASSWORD: trino
+      MARIADB_USER: trino
+      MARIADB_PASSWORD: trino
+    networks:
+      - trino-network
+  postgresql:
+    image: postgres
+    container_name: postgres
+    hostname: postgres
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: trino
+      POSTGRES_PASSWORD: trino
+      POSTGRES_DB: trino
+    networks:
+      - trino-network
+  mongodb:
+    image: mongo:4.4.6
+    container_name: mongodb
+    hostname: mongodb
+    restart: unless-stopped
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: trino
+      MONGO_INITDB_ROOT_PASSWORD: trino
+    networks:
+      - trino-network
+  minio:
+    image: quay.io/minio/minio
+    container_name: minio
+    hostname: minio
+    restart: unless-stopped
+    ports:
+      - 9000:9000
+      - 9001:9001
+    networks:
+      - trino-network
+    command: ["server", "/data", "--console-address", ":9001"]
+  trino:
+    image: trinodb/trino
+    container_name: trino
+    hostname: trino
+    restart: unless-stopped
+    ports:
+      - 8080:8080
+    networks:
+      - trino-network
+    depends_on:
+      - mariadb
+      - postgresql
+      - mongodb
+    volumes:
+      - ./catalogs:/etc/trino/catalog
+  cloudbeaver:
+    image: dbeaver/cloudbeaver
+    container_name: cloudbeaver
+    hostname: cloudbeaver
+    restart: unless-stopped 
+    ports:
+      - 8978:8978
+    networks:
+      - trino-network
+    depends_on:
+      - trino
+    volumes:
+      - cloudbeaver:/opt/cloudbeaver
+networks: 
+  trino-network:
+    driver: bridge
+volumes:
+  cloudbeaver:
